@@ -29,7 +29,7 @@ dependencies {
 ```
 连接服务器
 ```
-Iws ws = Ws.client().connect("ws://124.222.224.186:8800");
+IWS ws = WS.client().connect("ws://124.222.224.186:8800");
 ```
 #### 监听连接
 ```
