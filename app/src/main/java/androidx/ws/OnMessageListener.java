@@ -4,8 +4,8 @@ public interface OnMessageListener {
 
     /**
      * 指令消息接收
-     * @param message 指令消息
+     * @param data 指令消息
      */
-    void onReceived(String message);
+    void onReceived(byte[] data);
 
 }

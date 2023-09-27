@@ -6,6 +6,7 @@ import android.os.Message;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.ws.handshake.ServerHandshake;
 
 public class Conversion extends Handler {
 
@@ -28,12 +29,16 @@ public class Conversion extends Handler {
         send(0, new MessageBody(open,listener));
     }
 
-    public void send(OnSendListener listener, String text) {
-        send(1, new MessageBody(text, listener));
+    public void send(OnSendListener listener, byte[] data) {
+        send(1, new MessageBody(data, listener));
     }
 
-    public void received(OnMessageListener listener, String text) {
-        send(2, new MessageBody(text, listener));
+    public void received(OnMessageListener listener, byte[] data) {
+        send(2, new MessageBody(data, listener));
+    }
+
+    public void open(OnOpenListener listener, ServerHandshake serverHandshake) {
+        send(3, new MessageBody(serverHandshake, listener));
     }
 
     private void send(int what, MessageBody msg) {
@@ -52,10 +57,13 @@ public class Conversion extends Handler {
                 body.getOnConnectListener().onConnect(body.isOpen());
                 break;
             case 1:
-                body.getOnSendListener().onSend(body.getText());
+                body.getOnSendListener().onSend(body.getData());
                 break;
             case 2:
-                body.getOnMessageListener().onReceived(body.getText());
+                body.getOnMessageListener().onReceived(body.getData());
+                break;
+            case 3:
+                body.getOnOpenListener().onOpen(body.getServerHandshake());
                 break;
         }
     }

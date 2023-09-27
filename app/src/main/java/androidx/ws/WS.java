@@ -1,10 +1,14 @@
 package androidx.ws;
 
-import android.util.Log;
-
-import org.java_websocket.enums.ReadyState;
+import androidx.ws.drafts.Draft;
+import androidx.ws.drafts.Draft_6455;
+import androidx.ws.enums.ReadyState;
+import androidx.ws.handshake.ServerHandshake;
+import androidx.ws.util.Print;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * WebSocket客户端
  */
-public class WS implements IWS, OnCloseListener, OnMessageListener {
+public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListener {
 
     private final String TAG = WS.class.getSimpleName();
     /**
@@ -27,7 +31,7 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
     /**
      * 客户端
      */
-    private WebSocket client;
+    private WSClient client;
     /**
      * 是否已连接
      */
@@ -36,6 +40,10 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
      * 连接地址
      */
     private String url;
+    /**
+     * 打开监听
+     */
+    private ConcurrentHashMap<Long, OnOpenListener> openMap;
     /**
      * 连接监听
      */
@@ -62,9 +70,13 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
     private ScheduledExecutorService scheduledExecutorService;
     private ScheduledFuture scheduledFuture;
     private Conversion conversion;
-
     private static WS ws;
 
+    /**
+     * websocket客户端
+     *
+     * @return
+     */
     public static WS client() {
         if (ws == null) {
             synchronized (WS.class) {
@@ -76,8 +88,18 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
         return ws;
     }
 
-    private WS() {
+    protected WS() {
         conversion = new Conversion();
+    }
+
+    @Override
+    public long addOpenListener(OnOpenListener listener) {
+        long id = System.currentTimeMillis();
+        if (openMap == null) {
+            openMap = new ConcurrentHashMap<>();
+        }
+        openMap.put(id, listener);
+        return id;
     }
 
     /**
@@ -127,6 +149,9 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
             if (sendMap != null) {
                 sendMap.remove(id);
             }
+            if (openMap != null) {
+                openMap.remove(id);
+            }
         }
     }
 
@@ -141,14 +166,26 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
         if (sendMap != null) {
             sendMap.clear();
         }
+        if (openMap != null) {
+            openMap.clear();
+        }
     }
 
     @Override
-    public void onReceived(String message) {
-        Log.i(TAG,"received "+message);
+    public void onOpen(ServerHandshake serverHandshake) {
+        if (openMap != null) {
+            for (Long key : openMap.keySet()) {
+                conversion.open(openMap.get(key), serverHandshake);
+            }
+        }
+    }
+
+    @Override
+    public void onReceived(byte[] data) {
+        Print.i(TAG, "received " + new String(data));
         if (messageMap != null) {
             for (Long key : messageMap.keySet()) {
-                conversion.received(messageMap.get(key), message);
+                conversion.received(messageMap.get(key), data);
             }
         }
     }
@@ -161,22 +198,36 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
 
     @Override
     public IWS connect(String url) {
+        return connect(url, new Draft_6455(), null, 0);
+    }
+
+    @Override
+    public IWS connect(String url, Map<String, String> headers) {
+        return connect(url, new Draft_6455(), headers, 0);
+    }
+
+    @Override
+    public IWS connect(String url, Draft protocolDraft) {
+        return connect(url, protocolDraft, null, 0);
+    }
+
+    @Override
+    public IWS connect(String url, Draft protocolDraft, Map<String, String> headers, int connectTimeout) {
         this.url = url;
         if (isOpen()) {
             return this;
         }
         if (client == null) {
-            client = new WebSocket(URI.create(url));
-            /**{@link #onReceived}**/
-            client.addMessageListener(this);
-            /**{@link #onClose}**/
-            client.addCloseListener(this);
+            client = new WSClient(URI.create(url), protocolDraft, headers, connectTimeout);
+            client.addOpenListener(this);/**{@link #onOpen(ServerHandshake)}**/
+            client.addMessageListener(this);/**{@link #onReceived(String)}**/
+            client.addCloseListener(this); /**{@link #onClose(int, String, boolean)}**/
         }
         if (client.isOpen()) {
-            Log.i(TAG, "connect isOpen = true and isConnecting = true");
+            Print.i(TAG, "connect isOpen = true and isConnecting = true");
             return ws;
         }
-        Log.i(TAG, "server = " + url);
+        Print.i(TAG, "server = " + url);
         if (executorService == null) {
             executorService = Executors.newSingleThreadExecutor();
         }
@@ -186,7 +237,7 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
         future = executorService.submit(() -> {
             try {
                 ReadyState state = client.getReadyState();
-                Log.i(TAG, "state = " + state);
+                Print.i(TAG, "state = " + state);
                 if (!state.equals(ReadyState.OPEN)) {
                     if (state.equals(ReadyState.NOT_YET_CONNECTED)) {
                         isOpen = client.connectBlocking();
@@ -194,13 +245,13 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
                         isOpen = client.reconnectBlocking();
                     }
                 }
-                Log.i(TAG, "connect isOpen = " + isOpen);
+                Print.i(TAG, "connect isOpen = " + isOpen);
                 if (connectMap != null) {
                     for (Long key : connectMap.keySet()) {
                         conversion.connect(connectMap.get(key), isOpen);
                     }
                 } else {
-                    Log.i(TAG, "connect map is null");
+                    Print.i(TAG, "connect map is null");
                 }
                 if (!isOpen) {
                     reconnect();
@@ -222,7 +273,7 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
         }
         scheduledFuture = scheduledExecutorService.schedule(() -> {
             if (!client.getReadyState().equals(ReadyState.OPEN)) {
-                Log.i(TAG, "reconnect...");
+                Print.i(TAG, "reconnect...");
                 connect(url);
             } else {
                 scheduledFuture.cancel(true);
@@ -231,13 +282,14 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
         return this;
     }
 
+
     @Override
     public void close() {
         if (client != null) {
             client.close();
             isOpen = false;
             client = null;
-            Log.i(TAG, "close");
+            Print.i(TAG, "close");
         }
         //取消连接
         if (future != null) {
@@ -276,6 +328,11 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
 
     @Override
     public void send(String text) {
+        send(text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Override
+    public void send(byte[] data) {
         if (client == null) {
             return;
         }
@@ -286,13 +343,13 @@ public class WS implements IWS, OnCloseListener, OnMessageListener {
             return;
         }
         if (isOpen && client.isOpen()) {
-            client.send(text);
+            client.send(data);
             if (sendMap != null) {
                 for (Long key : sendMap.keySet()) {
-                    conversion.send(sendMap.get(key), text);
+                    conversion.send(sendMap.get(key), data);
                 }
             }
-            Log.i(TAG, "send " + text);
+            Print.i(TAG, "send " + new String(data, StandardCharsets.UTF_8));
         }
     }
 

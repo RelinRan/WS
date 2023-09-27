@@ -1,16 +1,18 @@
 package androidx.ws;
 
-public class MessageBody {
-    private String text;
-    private OnMessageListener onMessageListener;
+import androidx.ws.handshake.ServerHandshake;
 
+public class MessageBody {
+    private byte[] data;
+    private OnMessageListener onMessageListener;
     private boolean open;
     private OnConnectListener onConnectListener;
-
     private OnSendListener onSendListener;
+    private ServerHandshake serverHandshake;
+    private OnOpenListener onOpenListener;
 
-    public MessageBody(String text, OnMessageListener listener) {
-        this.text = text;
+    public MessageBody(byte[] data, OnMessageListener listener) {
+        this.data = data;
         this.onMessageListener = listener;
     }
 
@@ -19,17 +21,22 @@ public class MessageBody {
         this.onConnectListener = onConnectListener;
     }
 
-    public MessageBody(String text, OnSendListener onSendListener) {
-        this.text = text;
+    public MessageBody(byte[] data, OnSendListener onSendListener) {
+        this.data = data;
         this.onSendListener = onSendListener;
     }
 
-    public String getText() {
-        return text;
+    public MessageBody(ServerHandshake serverHandshake, OnOpenListener onOpenListener) {
+        this.serverHandshake = serverHandshake;
+        this.onOpenListener = onOpenListener;
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public byte[] getData() {
+        return data;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
     }
 
     public OnMessageListener getOnMessageListener() {
@@ -62,5 +69,21 @@ public class MessageBody {
 
     public void setOnSendListener(OnSendListener onSendListener) {
         this.onSendListener = onSendListener;
+    }
+
+    public ServerHandshake getServerHandshake() {
+        return serverHandshake;
+    }
+
+    public void setServerHandshake(ServerHandshake serverHandshake) {
+        this.serverHandshake = serverHandshake;
+    }
+
+    public OnOpenListener getOnOpenListener() {
+        return onOpenListener;
+    }
+
+    public void setOnOpenListener(OnOpenListener onOpenListener) {
+        this.onOpenListener = onOpenListener;
     }
 }
