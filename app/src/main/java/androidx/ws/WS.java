@@ -182,7 +182,6 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
 
     @Override
     public void onReceived(byte[] data) {
-        Print.i(TAG, "received " + new String(data));
         if (messageMap != null) {
             for (Long key : messageMap.keySet()) {
                 conversion.received(messageMap.get(key), data);
@@ -349,7 +348,6 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
                     conversion.send(sendMap.get(key), data);
                 }
             }
-            Print.i(TAG, "send " + new String(data, StandardCharsets.UTF_8));
         }
     }
 

@@ -31,6 +31,10 @@ public class WSClient extends WebSocketClient {
      * 打开监听
      */
     private OnOpenListener onOpenListener;
+    /**
+     * 设置调试
+     */
+    private boolean debug;
 
 
     public WSClient(URI serverURI) {
@@ -45,6 +49,14 @@ public class WSClient extends WebSocketClient {
         super(serverUri, protocolDraft, httpHeaders, connectTimeout);
     }
 
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+
+    public boolean isDebug() {
+        return debug;
+    }
+
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
         Print.i(TAG, "status = " + serverHandshake.getHttpStatus() + ",message = " + serverHandshake.getHttpStatusMessage());
@@ -55,9 +67,35 @@ public class WSClient extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        Print.i(TAG, "received = " + message);
+        if (debug) {
+            Print.i(TAG, "received = " + message);
+        }
         if (onMessageListener != null) {
             onMessageListener.onReceived(message.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    @Override
+    public void send(byte[] data) {
+        super.send(data);
+        if (debug && data != null) {
+            Print.i(TAG, "send " + new String(data, StandardCharsets.UTF_8));
+        }
+    }
+
+    @Override
+    public void send(String text) {
+        super.send(text);
+        if (debug) {
+            Print.i(TAG, "send " + text);
+        }
+    }
+
+    @Override
+    public void send(ByteBuffer bytes) {
+        super.send(bytes);
+        if (bytes != null && debug) {
+            Print.i(TAG, "send " + new String(bytes.array()));
         }
     }
 
@@ -66,7 +104,9 @@ public class WSClient extends WebSocketClient {
         super.onMessage(bytes);
         byte[] data = bytes.array();
         String content = new String(data);
-        Print.i(TAG, "received = " + content);
+        if (debug) {
+            Print.i(TAG, "received = " + content);
+        }
         if (onMessageListener != null) {
             onMessageListener.onReceived(data);
         }
@@ -113,6 +153,5 @@ public class WSClient extends WebSocketClient {
     public void addCloseListener(OnCloseListener listener) {
         this.onCloseListener = listener;
     }
-
 
 }
