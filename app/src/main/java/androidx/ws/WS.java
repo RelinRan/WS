@@ -71,6 +71,7 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
     private ScheduledFuture scheduledFuture;
     private Conversion conversion;
     private static WS ws;
+    private boolean debug;
 
     /**
      * websocket客户端
@@ -100,6 +101,17 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
         }
         openMap.put(id, listener);
         return id;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+        if (client != null) {
+            client.setDebug(debug);
+        }
+    }
+
+    public boolean isDebug() {
+        return debug;
     }
 
     /**
@@ -218,6 +230,7 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
         }
         if (client == null) {
             client = new WSClient(URI.create(url), protocolDraft, headers, connectTimeout);
+            client.setDebug(debug);
             client.addOpenListener(this);/**{@link #onOpen(ServerHandshake)}**/
             client.addMessageListener(this);/**{@link #onReceived(String)}**/
             client.addCloseListener(this); /**{@link #onClose(int, String, boolean)}**/
