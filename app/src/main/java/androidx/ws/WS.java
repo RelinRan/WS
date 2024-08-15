@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListener {
 
-    private final String TAG = WS.class.getSimpleName();
+    private String TAG = WS.class.getSimpleName();
     /**
      * 重连时间 - 单位毫秒
      */
@@ -72,6 +72,16 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
     private Conversion conversion;
     private static WS ws;
     private boolean debug;
+
+    /**
+     * 清除map
+     * @param map
+     */
+    private void clearMap(Map map) {
+        if (map != null) {
+            map.clear();
+        }
+    }
 
     /**
      * websocket客户端
@@ -319,18 +329,13 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
     }
 
     @Override
-    public boolean isConnecting() {
+    public boolean isOpen() {
         return client == null ? false : client.isOpen();
     }
 
     @Override
     public boolean isClosing() {
         return client == null ? false : client.isClosing();
-    }
-
-    @Override
-    public boolean isOpen() {
-        return client == null ? false : client.isOpen();
     }
 
     @Override
@@ -362,6 +367,28 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
                 }
             }
         }
+    }
+
+    @Override
+    public void destroy() {
+        close();
+        future = null;
+        scheduledExecutorService = null;
+        scheduledFuture = null;
+        url = null;
+        clearMap(openMap);
+        clearMap(connectMap);
+        clearMap(messageMap);
+        clearMap(sendMap);
+        openMap = null;
+        connectMap = null;
+        messageMap = null;
+        sendMap = null;
+        if (conversion!=null){
+            conversion.removeCallbacksAndMessages(null);
+        }
+        conversion = null;
+        ws = null;
     }
 
 }

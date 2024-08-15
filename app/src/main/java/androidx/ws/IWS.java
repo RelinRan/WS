@@ -110,11 +110,6 @@ public interface IWS {
     boolean isClosed();
 
     /**
-     * @return 是否在连接状态
-     */
-    boolean isConnecting();
-
-    /**
      * @return 是否正在关闭
      */
     boolean isClosing();
@@ -128,6 +123,11 @@ public interface IWS {
      * @return 刷新数据关闭
      */
     boolean isFlushAndClose();
+
+    /**
+     * 销毁对象
+     */
+    void destroy();
 
     /**
      * 发送数据
