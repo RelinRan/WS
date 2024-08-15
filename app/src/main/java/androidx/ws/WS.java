@@ -3,6 +3,7 @@ package androidx.ws;
 import androidx.ws.drafts.Draft;
 import androidx.ws.drafts.Draft_6455;
 import androidx.ws.enums.ReadyState;
+import androidx.ws.framing.CloseFrame;
 import androidx.ws.handshake.ServerHandshake;
 import androidx.ws.util.Print;
 
@@ -220,7 +221,12 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
     @Override
     public void onClose(int code, String reason, boolean remote) {
         isOpen = false;
-        reconnect();
+        //正常关闭客户端
+        if (code == CloseFrame.NORMAL) {
+            Print.i(TAG, "normal closure");
+        } else {
+            reconnect();
+        }
     }
 
     @Override
@@ -313,12 +319,12 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
 
     @Override
     public void close() {
-        if (client != null) {
+        if (client!=null&&client.isOpen()) {
             client.close();
-            isOpen = false;
-            client = null;
-            Print.i(TAG, "close");
         }
+        isOpen = false;
+        client = null;
+        Print.i(TAG, "close");
         //取消连接
         if (future != null) {
             future.cancel(true);
