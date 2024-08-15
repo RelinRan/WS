@@ -1,11 +1,12 @@
 #### WS
 Android WebSocket  
 #### 资源
-|名字|资源|
-|-|-|
-|AAR|[下载](https://github.com/RelinRan/WS/tree/main/aar)|
-|GitHub |[查看](https://github.com/RelinRan/WS)|
-|Gitee|[查看](https://gitee.com/relin/WS)|
+| 名字     | 资源                                                 |
+|--------|----------------------------------------------------|
+| jar    | [下载](https://github.com/RelinRan/WS/tree/main/jar) |
+| aar    | [下载](https://github.com/RelinRan/WS/tree/main/aar) |
+| GitHub | [查看](https://github.com/RelinRan/WS)               |
+| Gitee  | [查看](https://gitee.com/relin/WS)                   |
 #### Maven
 1.build.grade
 ```
@@ -19,7 +20,7 @@ allprojects {
 2./app/build.grade
 ```
 dependencies {
-	implementation 'com.github.RelinRan:WS:2022.2023.9.23.1'
+	implementation 'com.github.RelinRan:WS:2022.2024.8.15.1'
 }
 ```
 #### 初始化

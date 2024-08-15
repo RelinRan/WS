@@ -75,6 +75,7 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
 
     /**
      * 清除map
+     *
      * @param map
      */
     private void clearMap(Map map) {
@@ -86,15 +87,20 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
     /**
      * websocket客户端
      *
+     * @param single 是否单例模式
      * @return
      */
-    public static WS client() {
-        if (ws == null) {
-            synchronized (WS.class) {
-                if (ws == null) {
-                    ws = new WS();
+    public static WS client(boolean single) {
+        if (single) {
+            if (ws == null) {
+                synchronized (WS.class) {
+                    if (ws == null) {
+                        ws = new WS();
+                    }
                 }
             }
+        } else {
+            ws = new WS();
         }
         return ws;
     }
@@ -384,7 +390,7 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
         connectMap = null;
         messageMap = null;
         sendMap = null;
-        if (conversion!=null){
+        if (conversion != null) {
             conversion.removeCallbacksAndMessages(null);
         }
         conversion = null;
