@@ -219,8 +219,6 @@ public class WebSocketImpl implements WebSocket {
      */
     public void decode(ByteBuffer socketBuffer) {
         assert (socketBuffer.hasRemaining());
-        String content = new String(socketBuffer.array(), socketBuffer.position(), socketBuffer.remaining());
-        Print.i(TAG, "process(" + socketBuffer.remaining() + "):{" + (socketBuffer.remaining() > 1000 ? "too big to display" : content) + "}");
         if (readyState != ReadyState.NOT_YET_CONNECTED) {
             if (readyState == ReadyState.OPEN) {
                 decodeFrames(socketBuffer);
@@ -390,7 +388,6 @@ public class WebSocketImpl implements WebSocket {
         try {
             frames = draft.translateFrame(socketBuffer);
             for (Framedata f : frames) {
-                Print.i(TAG, "matched frame: " + new String(f.getPayloadData().array()));
                 draft.processFrame(this, f);
             }
         } catch (LimitExceededException e) {
@@ -670,7 +667,6 @@ public class WebSocketImpl implements WebSocket {
         }
         ArrayList<ByteBuffer> outgoingFrames = new ArrayList<>();
         for (Framedata f : frames) {
-            Print.i(TAG, "send frame: " + new String(f.getPayloadData().array()));
             outgoingFrames.add(draft.createBinaryFrame(f));
         }
         write(outgoingFrames);
@@ -695,8 +691,7 @@ public class WebSocketImpl implements WebSocket {
         // Gets a PingFrame from WebSocketListener(wsl) and sends it.
         PingFrame pingFrame = wsl.onPreparePing(this);
         if (pingFrame == null) {
-            throw new NullPointerException(
-                    "onPreparePing(WebSocket) returned null. PingFrame to sent can't be null.");
+            throw new NullPointerException("onPreparePing(WebSocket) returned null. PingFrame to sent can't be null.");
         }
         sendFrame(pingFrame);
     }
@@ -731,8 +726,6 @@ public class WebSocketImpl implements WebSocket {
     }
 
     private void write(ByteBuffer buf) {
-        String content = new String(buf.array());
-        Print.i(TAG, "write(" + buf.remaining() + "):{" + (buf.remaining() > 1000 ? "too big to display" : content) + "}");
         outQueue.add(buf);
         wsl.onWriteDemand(this);
     }

@@ -578,7 +578,6 @@ public class Draft_6455 extends Draft {
     }
     currentDecodingExtension.isFrameValid(frame);
     currentDecodingExtension.decodeFrame(frame);
-    Print.i(TAG,"afterDecoding("+frame.getPayloadData().remaining()+"):{"+ (frame.getPayloadData().remaining() > 1000 ? "too big to display" : new String(frame.getPayloadData().array()))+"}");
     frame.isValid();
     return frame;
   }

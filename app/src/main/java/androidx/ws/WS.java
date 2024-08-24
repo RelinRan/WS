@@ -319,12 +319,39 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
 
     @Override
     public void close() {
-        if (client!=null&&client.isOpen()) {
+        if (client != null && client.isOpen()) {
             client.close();
+            Print.i(TAG, "close");
         }
         isOpen = false;
         client = null;
-        Print.i(TAG, "close");
+        //取消连接
+        if (future != null) {
+            future.cancel(true);
+            future = null;
+        }
+        //取消重连定时任务
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(true);
+            scheduledFuture = null;
+        }
+    }
+
+    /**
+     * 阻塞关闭
+     */
+    @Override
+    public void closeBlocking() {
+        if (client != null && client.isOpen()) {
+            try {
+                client.closeBlocking();
+                Print.i(TAG, "closeBlocking");
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        isOpen = false;
+        client = null;
         //取消连接
         if (future != null) {
             future.cancel(true);
@@ -381,9 +408,11 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
         }
     }
 
+    /**
+     * 释放对象
+     */
     @Override
-    public void destroy() {
-        close();
+    public void free() {
         future = null;
         scheduledExecutorService = null;
         scheduledFuture = null;
@@ -401,6 +430,12 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
         }
         conversion = null;
         ws = null;
+    }
+
+    @Override
+    public void destroy() {
+        close();
+        free();
     }
 
 }

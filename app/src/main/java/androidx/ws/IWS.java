@@ -105,6 +105,11 @@ public interface IWS {
     void close();
 
     /**
+     * 阻塞关闭连接
+     */
+    void closeBlocking();
+
+    /**
      * @return 是否已经关闭连接
      */
     boolean isClosed();
@@ -125,7 +130,12 @@ public interface IWS {
     boolean isFlushAndClose();
 
     /**
-     * 销毁对象
+     * 释放内存（不包含关闭连接）
+     */
+    void free();
+
+    /**
+     * 销毁对象（包含关闭连接）
      */
     void destroy();
 
