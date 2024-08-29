@@ -38,6 +38,10 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
      */
     private boolean isOpen;
     /**
+     * 失败是否重连
+     */
+    private boolean retry = true;
+    /**
      * 连接地址
      */
     private String url;
@@ -129,6 +133,14 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
 
     public boolean isDebug() {
         return debug;
+    }
+
+    public void setRetry(boolean retry) {
+        this.retry = retry;
+    }
+
+    public boolean isRetry() {
+        return retry;
     }
 
     /**
@@ -299,20 +311,22 @@ public class WS implements IWS, OnOpenListener, OnCloseListener, OnMessageListen
 
     @Override
     public IWS reconnect() {
-        if (scheduledExecutorService == null) {
-            scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
-        }
-        if (scheduledFuture != null) {
-            scheduledFuture.cancel(true);
-        }
-        scheduledFuture = scheduledExecutorService.schedule(() -> {
-            if (!client.getReadyState().equals(ReadyState.OPEN)) {
-                Print.i(TAG, "reconnect...");
-                connect(url);
-            } else {
+        if (isRetry()) {
+            if (scheduledExecutorService == null) {
+                scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
+            }
+            if (scheduledFuture != null) {
                 scheduledFuture.cancel(true);
             }
-        }, RECONNECT_TIME, TimeUnit.SECONDS);
+            scheduledFuture = scheduledExecutorService.schedule(() -> {
+                if (!client.getReadyState().equals(ReadyState.OPEN)) {
+                    Print.i(TAG, "reconnect...");
+                    connect(url);
+                } else {
+                    scheduledFuture.cancel(true);
+                }
+            }, RECONNECT_TIME, TimeUnit.SECONDS);
+        }
         return this;
     }
 
